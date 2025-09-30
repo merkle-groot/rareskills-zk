@@ -18,7 +18,7 @@ contract Pairing {
     G1Point G1 = G1Point(1, 2);
 
     function pairingCheck(G1Point calldata a, G2Point calldata b, G1Point calldata c, G2Point calldata d) external view returns (bool verified) {
-        bytes memory inputPairing = abi.encodePacked(a.x, a.y, b.x, b.y, c.x, c.y, d.x, d.y);
+        bytes memory inputPairing = abi.encodePacked(a.x, a.y, b.x[1], b.x[0], b.y[1], b.y[0], c.x, c.y, d.x[1], d.x[0], d.y[1], d.y[0]);
         (bool success, bytes memory data) = address(0x08).staticcall(inputPairing);
 
         require(success, "failed to get pairing verification");
