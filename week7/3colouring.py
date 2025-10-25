@@ -1,4 +1,5 @@
 import numpy as np
+from py_ecc.bn128 import G1, G2, multiply, pairing
 
 # x*x = r
 # r*x = 6*r - 11*x + 6
@@ -55,12 +56,30 @@ leftMul = np.matmul(L, w)
 rightMul = np.matmul(R, w)
 LRMul = np.multiply(leftMul, rightMul)
 
-
-print(outputMul)
-print(LRMul)
-
 result = outputMul == LRMul
 assert result.all()
-# print(leftMul)
-# print(rightMul)
+
+outputMulGt = []
+for x in np.array(outputMul[0]).flatten():
+    outputMulGt.append(pairing(multiply(G2, x), multiply(G1, 1)))
+
+leftMulMulG2 = []
+for x in np.array(leftMul[0]).flatten():
+    leftMulMulG2.append(multiply(G2, x))
+
+rightMulG1 = []
+for x in np.array(rightMul[0]).flatten():
+    rightMulG1.append(multiply(G1, x))
+
+pairingLeftRight = []
+for (x, y) in zip(leftMulMulG2, rightMulG1):
+    pairingLeftRight.append(pairing(x, y))
+
+for (x, y) in zip(outputMulGt, pairingLeftRight):
+    if x == y:
+        continue
+    else:
+        print("not equal")
+        break
+
 
