@@ -12,6 +12,12 @@ def multiply_by_witness(polys, witness):
     
     return new_polys
 
+def evaluate_psi_srs(witness, psi_points, G):
+    result = multiply(G, 0)
+    for i in range(len(psi_points)):
+        result = add(result, multiply(psi_points[i], witness[i]))
+
+    return result
 
 def get_h(l_w, r_w, o_w, contraint_count, mod, GF):
     l_w_sum = Poly([0], field=GF)
@@ -48,13 +54,23 @@ if __name__ == "__main__":
 
     print("no of constraints: ", contraint_count)
     print("no of signals: ", term_nos)
-    (g1_points, g2_points, ht_points) = generate_srs(contraint_count, curve_order, GF, G1, G2)
+    (g1_points, g2_points, ht_points, alpha, beta, psi_points) = generate_srs(
+        contraint_count, 
+        curve_order, 
+        l_polys,
+        r_polys,
+        o_polys,
+        GF, 
+        G1, 
+        G2
+    )
 
     # evaluate qap on srs
     print("multiply qap by witness...")
     l_w = multiply_by_witness(l_polys, w)
     r_w = multiply_by_witness(r_polys, w)
     o_w = multiply_by_witness(o_polys, w)
+
     print("generating h...")
     h = get_h(l_w, r_w, o_w, contraint_count, curve_order, GF)
     print("h generated")
@@ -64,14 +80,23 @@ if __name__ == "__main__":
     r_point = evaluate_list_srs(r_w, g2_points, G2, GF)
     o_point = evaluate_list_srs(o_w, g1_points, G1, GF)
     h_point = evaluate_poly_srs(h, ht_points, G1, GF)
-    print("qap evaluated")
+
+    psi_point = evaluate_psi_srs(w, psi_points, G1)
+
+    A_1 = add(alpha, l_point)
+    B_2 = add(beta, r_point)
+    C_1 = add(
+        psi_point,
+        h_point
+    )
 
     print("performing pairing...")
-    pairing_1 = pairing(r_point, neg(l_point))
-    pairing_2 = pairing(G2, add(o_point, h_point))
+    pairing_1 = pairing(B_2, neg(A_1))
+    pairing_2 = pairing(G2, C_1)
+    pairing_3 = pairing(beta, alpha)
     print("pairing done")
 
-    result = pairing_1 * pairing_2 
+    result = pairing_1 * pairing_2 * pairing_3
     expected_result = pairing(G2, multiply(G1, 0))
 
     assert eq(result, expected_result)

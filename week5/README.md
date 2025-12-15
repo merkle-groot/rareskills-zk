@@ -1,98 +1,52 @@
-# Homework 5
+# Homework 6
 
-You will need to use python to generate the test cases, but the goal is to write solidity code that leverages the precompiles to accomplish the following:
+Implement a solidity contract that verifies the computation for the EC points.
 
-## Problem 1: Rational numbers
-
-We’re going to do zero knowledge addition again.
-
-Claim: “I know two rational numbers that add up to num/den”
-
-Proof: ([A], [B], num, den)
-
-Here, num is the numerator of the rational number and den is the denominator.
-
-```solidity
-struct ECPoint {
-	uint256 x;
-	uint256 y;
-}
-
-function rationalAdd(ECPoint calldata A, ECPoint calldata B, uint256 num, uint256 den) public view returns (bool verified) {
-	
-	// return true if the prover knows two numbers that add up to num/den
-}
+```math
+0 = -A_1B_2 +\alpha_1\beta_2 + X_1\gamma_2 + C_1\delta_2\\X_1=x_1G1 + x_2G1 + x_3G1
 ```
 
-Solidity/EVM has two functions you may find handy: `mulmod` (which does multiplication modulo p) and the precompile `modExp` which does modular exponentiation.
+Pick any (nontrivial) values to generate the points that results a balanced equation.
 
-Although `modExp` does not let you raise to the power of -1, you can accomplish the same thing by raising a number to `curve_order - 2`.
+Note that x1, x2, x3 are uint256 and the rest are G1 or G2 points.
 
-The following identity will be handy:
-
-```python
-pow(a, -1, curve_order) == pow(a, curve_order - 2, curve_order)
+You will need to take in the following as arguments to a public function:
+```math
+A_1, B_2, C_1, x_1,x_2,x_3
 ```
 
-(This is Fermat’s little theorem, you can ask a chatbot AI to further explain this, but it isn’t necessary to understand this)
+Use the ethereum precompiles for addition and multiplication to compute $X$, then the precompile for pairing to compute the entire equation in one go.
 
-To accomplish `pow` the precompile `modExp` may be handy.
-
-```solidity
-function modExp(uint256 base, uint256 exp, uint256 mod)
-		public
-		view
-		returns (uint256) {
-		
-		bytes memory precompileData = abi.encode(32, 32, 32, base, exp, mod);
-    (bool ok, bytes memory data) = address(5).staticcall(precompileData);
-    require(ok, "expMod failed");
-    return abi.decode(data, (uint256));
-}
+All other points should be hardcoded into the contract. For example, suppose you want
+```math
+\alpha_1 = 5G_1\\
+\beta_2 = 6G_2\\
+...
 ```
 
-## Problem 2: Matrix Multiplication
+You need to compute those values and write them as constants inside the contract.
 
-There is no claim statement here, just execute the math on chain.
+**Tip: make the pairing work with only two sets of points (2 G1 and 2 G2) first for simple examples. The order for G2 in the precompile is not what you are expecting it to be!**
 
-Your contract should implement matrix multiplication of an n x n matrix (**M**) of uint256 and a n x 1 vector of points (**s**). It validates the claim that matrix **Ms = o** where o is a n x 1 matrix of uint256.
-
-You will need to multiply **o** by the generator on-chain so that both sides have the same type.
-
-```solidity
-struct ECPoint {
-	uint256 x;
-	uint256 y;
-[}](https://www.notion.so/db908c2843364d5b8a6401fb6fe4588b?pvs=21)
-
-function matmul(uint256[] calldata matrix,
-                uint256 n, // n x n for the matrix
-                ECPoint[] calldata s, // n elements
-                uint256[] calldata o // n elements
-               ) public returns (bool verified) {
-
-	// revert if dimensions don't make sense or the matrices are empty
-
-	// return true if Ms == o elementwise. You need to do n equality checks. If you're lazy, you can hardcode n to 3, but it is suggested that you do this with a for loop 
-}
+# Testing
+## Create python3 venv
+```bash
+python3 -m venv .env
+source .env/bin/activate
 ```
 
-Example
-
-$$
-\begin{bmatrix}1 & 2 & 3\\4 & 5 & 6\\7 & 8 & 9\end{bmatrix}\begin{bmatrix}P\\Q\\R\end{bmatrix}=\begin{bmatrix}P+2Q+3R\\4P+5Q+6R\\7P + 8Q + 9R\end{bmatrix}\stackrel{?}{=}\begin{bmatrix}o_1G\\o_2G\\o_3G\end{bmatrix}
-$$
-
-## Usage
-
-### Build
-
-```shell
-$ forge build
+## Install python3 libs
+```bash
+pip3 install eth_abi
+pip3 install py_ecc
 ```
 
-### Test
+## Install forge libs
+```bash
+forge install
+```
 
-```shell
-$ forge test
+## Run the test using FFI
+```bash
+forge test --ffi -vvvv
 ```
