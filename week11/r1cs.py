@@ -1,6 +1,6 @@
 import numpy as np
 from py_ecc.bn128 import curve_order
-from galois import GF, lagrange_poly, Poly
+from galois import GF, lagrange_poly
 import numpy as np
 
 def sanitize_matrix(m, mod = curve_order):
@@ -30,12 +30,13 @@ def check_input(l, r, o, w, mod = curve_order):
     if not result.all():
         raise ValueError("Input validation failed: O*w != (L*w ∘ R*w) mod p")
 
+    print("Initial r1cs check passed")
     return True
 
 def get_poly(vec, GF):
-    print("interpolating y:", vec)
+    # print("interpolating y:", vec)
     xs = list(range(1, len(vec) + 1))
-    print("x coord: ", xs)
+    # print("x coord: ", xs)
     return lagrange_poly(GF(xs), GF(vec))
 
 def get_qap(l, r, o, GF, mod = curve_order):
@@ -45,8 +46,6 @@ def get_qap(l, r, o, GF, mod = curve_order):
 
     if l.shape != r.shape != o.shape:
         raise ValueError("matrix mismatch")
-    else:
-        print("check passed")
     l_polys = []
     r_polys = []
     o_polys = []
